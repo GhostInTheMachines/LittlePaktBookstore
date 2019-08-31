@@ -11,15 +11,15 @@ namespace LittlePaktBookstore.Controllers
 {
     public class HomeController : Controller
     {
-                                        // List<Book> _book;
         IRepository<Book> _bookRepo;
         IRepository<Carousel> _CarouselRepo;
-        public HomeController(IRepository<Book> book, IRepository<Carousel> carousel)
+        IRepository<Order> _OrdersRepo;
+        public HomeController(IRepository<Book> book, IRepository<Carousel> carousel,
+            IRepository<Order> orders)
         {
-            _bookRepo = book;           // new MockBooksRepository(IRepository<Book> book, IRepository<Carousel> carousel);
-                                        //_book = new List<Book>();
-            _CarouselRepo = carousel;   // new MockCarouselRepository();
-
+            _bookRepo = book;
+            _CarouselRepo = carousel;
+            _OrdersRepo = orders;
         }
         // The home page
         public IActionResult Index()
@@ -98,8 +98,10 @@ namespace LittlePaktBookstore.Controllers
         {
             if (ModelState.IsValid)
             {
-                if (_bookRepo.GetAll().Count(x => x.Id == orderDetails.BookId) >= 1)
+                if (_bookRepo.GetAll().Count(x => x.Id == id) >= 1)
                 {
+                    orderDetails.BookId = id;
+                    _OrdersRepo.Add(orderDetails);
                     return RedirectToAction("ThankYou");
                 }
                 else
@@ -119,6 +121,10 @@ namespace LittlePaktBookstore.Controllers
         public IActionResult ThankYou()
         {
             return View();
+        }
+        public IActionResult OrdersList()
+        {
+            return View(_OrdersRepo.GetAll());
         }
     }
 }
