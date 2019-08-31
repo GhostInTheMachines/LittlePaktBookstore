@@ -1,0 +1,124 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using LittlePaktBookstore.Models;
+using LittlePaktBookstore.Services;
+using LittlePaktBookstore.ViewModels;
+using Microsoft.AspNetCore.Mvc;
+
+namespace LittlePaktBookstore.Controllers
+{
+    public class HomeController : Controller
+    {
+                                        // List<Book> _book;
+        IRepository<Book> _bookRepo;
+        IRepository<Carousel> _CarouselRepo;
+        public HomeController(IRepository<Book> book, IRepository<Carousel> carousel)
+        {
+            _bookRepo = book;           // new MockBooksRepository(IRepository<Book> book, IRepository<Carousel> carousel);
+                                        //_book = new List<Book>();
+            _CarouselRepo = carousel;   // new MockCarouselRepository();
+
+        }
+        // The home page
+        public IActionResult Index()
+        {
+            HomeIndexViewModel model = new HomeIndexViewModel()
+            {
+                Books = _bookRepo.GetAll(),
+                Carousels = _CarouselRepo.GetAll()
+            };
+            return View(model);
+        }
+        [HttpGet]
+        public IActionResult AddBook()
+        {
+            return View();
+        }
+        [HttpPost]
+        public IActionResult AddBook(Book book)
+        {
+            if (ModelState.IsValid)
+            {
+                Book item = new Book()
+                {
+                    Id = _bookRepo.GetAll().Max(m => m.Id) + 1,
+                    Title = book.Title,
+                    Description = book.Description,
+                    Author = book.Author,
+                    PublishDate = book.PublishDate,
+                    Price = book.Price,
+                    image = book.image
+                };
+                _bookRepo.Add(item);
+                return RedirectToAction("Index");
+            }
+            else
+            {
+                return View();
+            }
+        }
+        // The about page
+        public IActionResult About()
+        {
+            return View();
+        }
+        // The contact us page
+        public IActionResult Contact()
+        {
+            return View();
+        }
+        // The details page for the read more button
+        public IActionResult Details(int id)
+        {
+            Book book = _bookRepo.Get(id);
+            return View(book);
+        }
+        // The orders page
+        [HttpGet]
+        public IActionResult Order(int? id)
+        {
+            if(id!=null && id>=0)
+            {
+                OrderViewModel model = new OrderViewModel()
+                {
+                    BookToOrder = _bookRepo.Get((int)id),
+                    OrderDetails = new Order()
+                    {
+                        BookId = (int)id
+                    }
+                };
+                return View(model);
+            }
+            return View();
+        }
+        [HttpPost]
+        public IActionResult Order(int id, Order orderDetails)
+        {
+            if (ModelState.IsValid)
+            {
+                if (_bookRepo.GetAll().Count(x => x.Id == orderDetails.BookId) >= 1)
+                {
+                    return RedirectToAction("ThankYou");
+                }
+                else
+                {
+                    return View();
+                }
+            }
+            else
+            {
+                return View(new OrderViewModel()
+                {
+                    OrderDetails = orderDetails,
+                    BookToOrder = _bookRepo.Get(id)
+                });
+            }
+        }
+        public IActionResult ThankYou()
+        {
+            return View();
+        }
+    }
+}
